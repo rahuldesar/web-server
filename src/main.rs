@@ -6,13 +6,16 @@ use std::{
     time::Duration,
 };
 
+use web_server::ThreadPool;
+
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:5566").unwrap();
+    let pool = ThreadPool::new(4);
 
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                thread::spawn(|| {
+                pool.execute(|| {
                     handle_connection(stream);
                 });
             }
@@ -23,19 +26,8 @@ fn main() {
 
 fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&mut stream);
-
-    // INFO: Prints request
-    /*
-        let http_request: Vec<_> = buf_reader
-            .lines()
-            .map(|result| result.unwrap())
-            .take_while(|line| !line.is_empty())
-            .collect();
-
-        println!("Request: {:#?}", http_request);
-    */
-
     let request_line = buf_reader.lines().next().unwrap().unwrap();
+
     println!("Request Line: {:#?}", request_line);
 
     let (status_line, filename) = match &request_line[..] {
