@@ -12,7 +12,7 @@ fn main() {
     let listener = TcpListener::bind("127.0.0.1:5566").unwrap();
     let pool = ThreadPool::new(4);
 
-    for stream in listener.incoming() {
+    /* for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
                 pool.execute(|| {
@@ -21,7 +21,16 @@ fn main() {
             }
             Err(_) => todo!(),
         }
+    } */
+    for stream in listener.incoming().take(2) {
+        let stream = stream.unwrap();
+
+        pool.execute(|| {
+            handle_connection(stream);
+        });
     }
+
+    println!("SHUTTING DOWN");
 }
 
 fn handle_connection(mut stream: TcpStream) {
